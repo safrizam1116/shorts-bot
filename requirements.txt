@@ -1,1 +1,7 @@
-# requirements.txt placeholder
+google-api-python-client
+google-auth
+google-auth-oauthlib
+moviepy
+pytz
+gdown
+flask

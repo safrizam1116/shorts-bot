@@ -1,6 +1,1 @@
-flask
-gdown
-google-api-python-client
-google-auth
-google-auth-oauthlib
-pytz
+# requirements.txt (placeholder)

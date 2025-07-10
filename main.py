@@ -70,24 +70,19 @@ def index():
     return "✅ Bot Shorts aktif - Render.com"
 
 def run_flask():
-    port = int(os.environ.get("PORT", 8003))  # default ke 8003 jika tidak ada env PORT
-    print(f"🌐 Flask listening on port {port}")
+    port = 3000  # WAJIB agar Render deteksi port terbuka
+    print(f"🌐 Flask aktif di port {port}")
     app.run(host="0.0.0.0", port=port)
 
 # ==== MAIN ====
 if __name__ == "__main__":
-    # Jalankan server Flask agar Render tahu Web Service aktif
     Thread(target=run_flask).start()
-
-    # Tunggu 3 detik agar Flask siap
     time.sleep(3)
 
-    # Jalankan upload jika jam ganjil
     if is_upload_time():
         upload_task()
     else:
         print(f"⏳ Bukan jam ganjil WIB, sekarang {get_current_wib_time().strftime('%H:%M')}. Bot standby.")
 
-    # Keep-alive loop agar service tetap hidup
     while True:
         time.sleep(30)

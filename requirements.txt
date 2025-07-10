@@ -1,9 +1,8 @@
+pytz
 flask
-schedule
+gdown
 moviepy
 google-api-python-client
 oauth2client
-python-dotenv
 requests
-pytz
-gdown
+python-dotenv

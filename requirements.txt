@@ -1,0 +1,9 @@
+flask
+schedule
+moviepy
+google-api-python-client
+oauth2client
+python-dotenv
+requests
+pytz
+gdown

@@ -1,5 +1,7 @@
 import subprocess
+
 def cut_video(input_path, output_path, start_time=0, duration=27):
+    print(f"✂️ Potong video mulai detik {start_time}")
     command = [
         "ffmpeg",
         "-y",
@@ -10,3 +12,4 @@ def cut_video(input_path, output_path, start_time=0, duration=27):
         output_path
     ]
     subprocess.run(command, check=True)
+    print("✅ Video berhasil dipotong")

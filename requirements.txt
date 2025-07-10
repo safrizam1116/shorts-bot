@@ -1,8 +1,12 @@
-pytz
 flask
-gdown
+pytz
+ffmpeg-python
 moviepy
 google-api-python-client
-oauth2client
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
 requests
 python-dotenv
+oauth2client
+gdown

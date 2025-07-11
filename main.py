@@ -4,7 +4,6 @@ import json
 import datetime
 import pytz
 from flask import Flask
-from threading import Thread
 
 from downloader import download_from_gdrive
 from cutter import cut_video
@@ -23,7 +22,7 @@ CLIP_DURATION = 28  # detik
 def get_wib_time():
     return datetime.datetime.now(datetime.timezone.utc).astimezone(pytz.timezone("Asia/Jakarta"))
 
-# === CEK LOG ===
+# === CEK JAM GANJIL DAN LOG ===
 def current_log_key():
     return get_wib_time().strftime("%Y-%m-%d-%H")
 
@@ -48,7 +47,6 @@ def mark_uploaded():
         json.dump(data, f, indent=2)
         f.truncate()
 
-# === OFFSET CLIP ===
 def get_offset():
     if not os.path.exists(LOG_PATH):
         return 0
@@ -56,7 +54,7 @@ def get_offset():
         data = json.load(f)
     return len(data)
 
-# === PROSES UTAMA ===
+# === UPLOAD TASK ===
 def upload_task():
     now = get_wib_time().strftime("%Y-%m-%d %H:%M:%S")
     print(f"🚀 [{now} WIB] Mulai upload Shorts...")
@@ -85,27 +83,20 @@ def upload_task():
     except Exception as e:
         print(f"❌ Gagal upload: {e}")
 
-# === WEB SERVER UNTUK RENDER ===
+# === FLASK APP ===
 app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return "🟢 Bot Shorts aktif - Web Service mode (Render.com)"
-
-def run_flask():
-    app.run(host="0.0.0.0", port=3000)
+    return "🟢 Bot aktif - Production via Waitress"
 
 # === MAIN ===
 if __name__ == "__main__":
-    Thread(target=run_flask).start()
-    time.sleep(3)
-
-    # Jalankan upload sekali saat aktif (cek otomatis via log)
     if not already_uploaded():
         upload_task()
     else:
         print(f"⏳ {get_wib_time().strftime('%H:%M')} WIB | Sudah upload jam ini.")
 
-    # Loop keep alive
-    while True:
-        time.sleep(60)
+    # Jalankan server Flask pakai waitress (production-grade WSGI)
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=3000)

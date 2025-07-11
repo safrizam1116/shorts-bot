@@ -101,16 +101,10 @@ def run_flask():
 
 # === MAIN ===
 if __name__ == "__main__":
-    # Jalankan Flask agar port 3000 terbuka (agar Render.com aktif)
     Thread(target=run_flask).start()
     time.sleep(3)
 
-    now = get_wib_time()
-    print(f"⏰ Sekarang {now.strftime('%H:%M')} WIB")
-        upload_task()
-    else:
-        print("⏳ Bukan jam ganjil WIB atau sudah upload. Menunggu jam ganjil berikutnya...")
+    upload_task()  # <-- tidak perlu di dalam if, langsung jalankan
 
-    # Keep-alive agar tidak mati
     while True:
         time.sleep(60)

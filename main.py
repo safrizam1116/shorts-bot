@@ -21,11 +21,7 @@ CLIP_DURATION = 28  # detik
 
 # === TIMEZONE WIB ===
 def get_wib_time():
-    return datetime.datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(pytz.timezone("Asia/Jakarta"))
-
-# === CEK APAKAH JAM GANJIL (WIB) ===
-def is_ganjil_hour():
-    return get_wib_time().hour % 2 == 1
+    return datetime.datetime.now(datetime.timezone.utc).astimezone(pytz.timezone("Asia/Jakarta"))
 
 # === CEK LOG ===
 def current_log_key():
@@ -63,7 +59,7 @@ def get_offset():
 # === PROSES UTAMA ===
 def upload_task():
     now = get_wib_time().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"🚀 [{now}] Mulai upload Shorts...")
+    print(f"🚀 [{now} WIB] Mulai upload Shorts...")
 
     try:
         os.makedirs("input", exist_ok=True)
@@ -104,7 +100,12 @@ if __name__ == "__main__":
     Thread(target=run_flask).start()
     time.sleep(3)
 
-    upload_task()  # <-- tidak perlu di dalam if, langsung jalankan
+    # Jalankan upload sekali saat aktif (cek otomatis via log)
+    if not already_uploaded():
+        upload_task()
+    else:
+        print(f"⏳ {get_wib_time().strftime('%H:%M')} WIB | Sudah upload jam ini.")
 
+    # Loop keep alive
     while True:
         time.sleep(60)

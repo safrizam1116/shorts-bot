@@ -98,7 +98,8 @@ if __name__ == "__main__":
     time.sleep(3)
 
     now = get_wib_time()
-    if now.hour % 2 == 1 and not already_uploaded():
+    if not already_uploaded():  # paksa upload meski bukan jam ganjil
+
         upload_task()
     else:
         print(f"⏳ {now.strftime('%H:%M')} WIB | Sudah upload atau bukan jam ganjil. Tidak upload.")

@@ -21,7 +21,7 @@ CLIP_DURATION = 28  # detik
 def get_wib_time():
     return datetime.datetime.now(datetime.timezone.utc).astimezone(pytz.timezone("Asia/Jakarta"))
 
-# === LOGIC ===
+# === LOGGING OFFSET ===
 def get_offset():
     if not os.path.exists(LOG_PATH):
         return 0
@@ -43,18 +43,19 @@ def mark_uploaded():
         json.dump(data, f, indent=2)
         f.truncate()
 
-# === UPLOAD FUNCTION ===
+# === PROSES UTAMA ===
 def upload_task():
+    print("🔧 STARTING BOT UPLOAD FIX + DEBUG MODE...")
     now = get_wib_time().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"\n🚀 [{now} WIB] Mulai proses upload Shorts...")
+    print(f"🚀 [{now} WIB] Mulai proses upload Shorts...")
 
     try:
-        # Folder setup
+        print("📁 Menyiapkan folder...")
         os.makedirs("input", exist_ok=True)
         os.makedirs("output", exist_ok=True)
         os.makedirs("final", exist_ok=True)
 
-        print("📥 Download video...")
+        print("📥 Download video dari Google Drive...")
         download_from_gdrive(VIDEO_ID, INPUT_PATH)
         print("✅ Download selesai.")
 
@@ -74,24 +75,30 @@ def upload_task():
 
         mark_uploaded()
         print("📝 Log upload disimpan.")
-    except Exception as e:
-        print(f"❌ ERROR SAAT UPLOAD: {e}")
 
-# === FLASK AGAR RENDER AKTIF ===
+    except Exception as e:
+        print(f"❌ GAGAL UPLOAD: {e}")
+
+# === FLASK SERVER UNTUK RENDER ===
 app = Flask(__name__)
 @app.route("/")
 def index():
-    return "🟢 Bot aktif - Upload paksa"
+    return "🟢 Bot aktif - sedang proses upload otomatis (Render)"
 
 # === MAIN ===
 if __name__ == "__main__":
-    print("🔧 STARTING BOT UPLOAD FIX + DEBUG MODE...")
-
-    try:
-        upload_task()
-    except Exception as e:
-        print("❌ GAGAL JALANKAN upload_task:", e)
-
-    # Web server agar Render.com tetap hidup (wajib port 3000)
+    # Debug awal
+    print("🌐 Menjalankan Web Server di Render...")
     from waitress import serve
-    serve(app, host="0.0.0.0", port=3000)
+    from threading import Thread
+
+    # Jalankan Flask di thread lain
+    Thread(target=lambda: serve(app, host="0.0.0.0", port=3000)).start()
+
+    time.sleep(2)  # beri waktu Flask aktif
+
+    # Paksa jalankan upload
+    upload_task()
+
+    while True:
+        time.sleep(60)

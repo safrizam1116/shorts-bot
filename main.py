@@ -84,9 +84,7 @@ if __name__ == "__main__":
     print("📦 main.py dimulai...")
     Thread(target=lambda: serve(app, host="0.0.0.0", port=3000)).start()
     time.sleep(3)
-    if is_odd_hour() and not already_uploaded():
-        upload_task()
-    else:
+    upload_task()
         print("⏳ Belum jam ganjil atau sudah upload.")
     while True:
         time.sleep(60)

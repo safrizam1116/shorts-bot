@@ -79,7 +79,9 @@ def index():
     return "🟢 Bot aktif — paksa upload"
 
 if __name__ == "__main__":
-    upload_task()  # Paksa langsung upload
+    print("🔧 Test: Coba upload langsung")
+    upload_task()
+
 
     from waitress import serve
     serve(app, host="0.0.0.0", port=3000)

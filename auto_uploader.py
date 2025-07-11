@@ -28,7 +28,6 @@ def upload_video(file_path, title, description):
         },
         media_body=media
     )
-
     response = None
     while response is None:
         status, response = request.next_chunk()

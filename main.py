@@ -15,13 +15,13 @@ INPUT_PATH = "input/video.mp4"
 CLIP_PATH = "output/short.mp4"
 UPSCALED_PATH = "final/short_upscaled.mp4"
 LOG_PATH = "logs/uploaded.json"
-CLIP_DURATION = 28
+CLIP_DURATION = 28  # detik
 
 # === TIMEZONE WIB ===
 def get_wib_time():
     return datetime.datetime.now(datetime.timezone.utc).astimezone(pytz.timezone("Asia/Jakarta"))
 
-# === LOGIC CLIP OFFSET ===
+# === LOGIC ===
 def get_offset():
     if not os.path.exists(LOG_PATH):
         return 0
@@ -30,6 +30,7 @@ def get_offset():
     return len(data)
 
 def mark_uploaded():
+    os.makedirs("logs", exist_ok=True)
     if not os.path.exists(LOG_PATH):
         with open(LOG_PATH, "w") as f:
             json.dump([], f)
@@ -42,49 +43,55 @@ def mark_uploaded():
         json.dump(data, f, indent=2)
         f.truncate()
 
-# === PROSES PAKSA UPLOAD ===
+# === UPLOAD FUNCTION ===
 def upload_task():
     now = get_wib_time().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"🚀 [{now} WIB] Mulai upload Shorts...")
+    print(f"\n🚀 [{now} WIB] Mulai proses upload Shorts...")
 
     try:
+        # Folder setup
+        os.makedirs("input", exist_ok=True)
+        os.makedirs("output", exist_ok=True)
+        os.makedirs("final", exist_ok=True)
+
         print("📥 Download video...")
         download_from_gdrive(VIDEO_ID, INPUT_PATH)
-        print("✅ Selesai download")
+        print("✅ Download selesai.")
 
         offset = get_offset()
         start = offset * CLIP_DURATION
-
-        print(f"✂️ Potong video mulai detik ke-{start}")
+        print(f"✂️ Potong video dari detik ke-{start} selama {CLIP_DURATION}s...")
         cut_video(INPUT_PATH, CLIP_PATH, start_time=start, duration=CLIP_DURATION)
-        print("✅ Selesai potong")
+        print("✅ Pemotongan selesai.")
 
         print("🔧 Upscaling ke 2K...")
         upscale_to_2k(CLIP_PATH, UPSCALED_PATH)
-        print("✅ Selesai upscale")
+        print("✅ Upscaling selesai.")
 
         print("📤 Upload ke YouTube...")
         upload_video(UPSCALED_PATH, title=f"🔥 Shorts {get_wib_time().strftime('%H:%M')}", description="#shorts #viral")
-        print("✅ Selesai upload")
+        print("✅ Upload ke YouTube selesai.")
 
         mark_uploaded()
-
+        print("📝 Log upload disimpan.")
     except Exception as e:
-        print(f"❌ Gagal: {e}")
+        print(f"❌ ERROR SAAT UPLOAD: {e}")
 
-# === SERVER (AGAR RENDER HIDUP) ===
+# === FLASK AGAR RENDER AKTIF ===
 app = Flask(__name__)
 @app.route("/")
 def index():
-    return "🟢 Bot aktif — paksa upload"
+    return "🟢 Bot aktif - Upload paksa"
 
+# === MAIN ===
 if __name__ == "__main__":
-    print("🔧 TESTING upload_task dijalankan...")
+    print("🔧 STARTING BOT UPLOAD FIX + DEBUG MODE...")
+
     try:
         upload_task()
     except Exception as e:
-        print("❌ ERROR upload_task:", e)
+        print("❌ GAGAL JALANKAN upload_task:", e)
 
+    # Web server agar Render.com tetap hidup (wajib port 3000)
     from waitress import serve
     serve(app, host="0.0.0.0", port=3000)
-

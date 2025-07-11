@@ -15,73 +15,71 @@ INPUT_PATH = "input/video.mp4"
 CLIP_PATH = "output/short.mp4"
 UPSCALED_PATH = "final/short_upscaled.mp4"
 LOG_PATH = "logs/uploaded.json"
-CLIP_DURATION = 28  # detik
+CLIP_DURATION = 28
 
-# === BUAT FOLDER OTOMATIS ===
-for folder in ["input", "output", "final", "logs"]:
-    os.makedirs(folder, exist_ok=True)
-
-# === WAKTU WIB ===
+# === TIMEZONE WIB ===
 def get_wib_time():
     return datetime.datetime.now(datetime.timezone.utc).astimezone(pytz.timezone("Asia/Jakarta"))
 
-# === HITUNG OFFSET (urutan keberapa klip) ===
+# === LOGIC CLIP OFFSET ===
 def get_offset():
     if not os.path.exists(LOG_PATH):
         return 0
     with open(LOG_PATH, "r") as f:
-        try:
-            data = json.load(f)
-            return len(data)
-        except:
-            return 0
+        data = json.load(f)
+    return len(data)
 
 def mark_uploaded():
-    key = get_wib_time().strftime("%Y-%m-%d %H:%M:%S")
+    if not os.path.exists(LOG_PATH):
+        with open(LOG_PATH, "w") as f:
+            json.dump([], f)
     with open(LOG_PATH, "r+") as f:
-        try:
-            data = json.load(f)
-        except:
-            data = []
-        data.append(key)
+        data = json.load(f)
+        key = get_wib_time().strftime("%Y-%m-%d-%H")
+        if key not in data:
+            data.append(key)
         f.seek(0)
         json.dump(data, f, indent=2)
         f.truncate()
 
-# === PROSES PAKSA UPLOAD SEKARANG ===
+# === PROSES PAKSA UPLOAD ===
 def upload_task():
     now = get_wib_time().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"🚀 [{now} WIB] Paksa upload Shorts...")
+    print(f"🚀 [{now} WIB] Mulai upload Shorts...")
 
     try:
-        print("📥 Download video dari Google Drive...")
+        print("📥 Download video...")
         download_from_gdrive(VIDEO_ID, INPUT_PATH)
+        print("✅ Selesai download")
 
         offset = get_offset()
         start = offset * CLIP_DURATION
+
         print(f"✂️ Potong video mulai detik ke-{start}")
         cut_video(INPUT_PATH, CLIP_PATH, start_time=start, duration=CLIP_DURATION)
+        print("✅ Selesai potong")
 
         print("🔧 Upscaling ke 2K...")
         upscale_to_2k(CLIP_PATH, UPSCALED_PATH)
+        print("✅ Selesai upscale")
 
         print("📤 Upload ke YouTube...")
         upload_video(UPSCALED_PATH, title=f"🔥 Shorts {get_wib_time().strftime('%H:%M')}", description="#shorts #viral")
+        print("✅ Selesai upload")
 
         mark_uploaded()
-        print("✅ Upload selesai dan dicatat di log.")
 
     except Exception as e:
-        print(f"❌ Gagal upload: {e}")
+        print(f"❌ Gagal: {e}")
 
-# === SERVER RENDER (agar tetap aktif) ===
+# === SERVER (AGAR RENDER HIDUP) ===
 app = Flask(__name__)
 @app.route("/")
 def index():
-    return "🟢 Bot aktif — Paksa Upload Sekarang"
+    return "🟢 Bot aktif — paksa upload"
 
-# === MAIN ===
 if __name__ == "__main__":
+    upload_task()  # Paksa langsung upload
+
     from waitress import serve
-    upload_task()
     serve(app, host="0.0.0.0", port=3000)

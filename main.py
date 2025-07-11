@@ -4,7 +4,6 @@ import json
 import datetime
 import pytz
 from flask import Flask
-
 from downloader import download_from_gdrive
 from cutter import cut_video
 from ffmpeg_upscale import upscale_to_2k
@@ -22,16 +21,13 @@ CLIP_DURATION = 28  # detik
 def get_wib_time():
     return datetime.datetime.now(datetime.timezone.utc).astimezone(pytz.timezone("Asia/Jakarta"))
 
-# === CEK JAM GANJIL DAN LOG ===
-def current_log_key():
-    return get_wib_time().strftime("%Y-%m-%d-%H")
-
-def already_uploaded():
+# === CLIP OFFSET ===
+def get_offset():
     if not os.path.exists(LOG_PATH):
-        return False
+        return 0
     with open(LOG_PATH, "r") as f:
         data = json.load(f)
-    return current_log_key() in data
+    return len(data)
 
 def mark_uploaded():
     os.makedirs("logs", exist_ok=True)
@@ -40,24 +36,17 @@ def mark_uploaded():
             json.dump([], f)
     with open(LOG_PATH, "r+") as f:
         data = json.load(f)
-        key = current_log_key()
+        key = get_wib_time().strftime("%Y-%m-%d-%H")
         if key not in data:
             data.append(key)
         f.seek(0)
         json.dump(data, f, indent=2)
         f.truncate()
 
-def get_offset():
-    if not os.path.exists(LOG_PATH):
-        return 0
-    with open(LOG_PATH, "r") as f:
-        data = json.load(f)
-    return len(data)
-
-# === UPLOAD TASK ===
+# === PROSES UTAMA ===
 def upload_task():
     now = get_wib_time().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"🚀 [{now} WIB] Mulai upload Shorts...")
+    print(f"🚀 [{now} WIB] PAKSA upload Shorts...")
 
     try:
         os.makedirs("input", exist_ok=True)
@@ -83,20 +72,16 @@ def upload_task():
     except Exception as e:
         print(f"❌ Gagal upload: {e}")
 
-# === FLASK APP ===
+# === FLASK APP (agar Render tetap ON) ===
 app = Flask(__name__)
-
 @app.route("/")
 def index():
-    return "🟢 Bot aktif - Production via Waitress"
+    return "🟢 Bot aktif — mode paksa upload"
 
 # === MAIN ===
 if __name__ == "__main__":
-    if not already_uploaded():
-        upload_task()
-    else:
-        print(f"⏳ {get_wib_time().strftime('%H:%M')} WIB | Sudah upload jam ini.")
+    upload_task()  # PAKSA UPLOAD LANGSUNG
 
-    # Jalankan server Flask pakai waitress (production-grade WSGI)
+    # Jalankan web service biar Render deteksi port 3000
     from waitress import serve
     serve(app, host="0.0.0.0", port=3000)

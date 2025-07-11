@@ -79,9 +79,12 @@ def index():
     return "🟢 Bot aktif — paksa upload"
 
 if __name__ == "__main__":
-    print("🔧 Test: Coba upload langsung")
-    upload_task()
-
+    print("🔧 TESTING upload_task dijalankan...")
+    try:
+        upload_task()
+    except Exception as e:
+        print("❌ ERROR upload_task:", e)
 
     from waitress import serve
     serve(app, host="0.0.0.0", port=3000)
+

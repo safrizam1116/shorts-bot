@@ -107,8 +107,6 @@ if __name__ == "__main__":
 
     now = get_wib_time()
     print(f"⏰ Sekarang {now.strftime('%H:%M')} WIB")
-
-    if is_ganjil_hour() and not already_uploaded():
         upload_task()
     else:
         print("⏳ Bukan jam ganjil WIB atau sudah upload. Menunggu jam ganjil berikutnya...")

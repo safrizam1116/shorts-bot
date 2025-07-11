@@ -8,6 +8,8 @@ from downloader import download_from_gdrive
 from cutter import cut_video
 from ffmpeg_upscale import upscale_to_2k
 from auto_uploader import upload_video
+from threading import Thread
+from waitress import serve
 
 # === KONFIGURASI ===
 VIDEO_ID = "1QskinABo707mG4dxdzv8Mna8pGS-WBGj"
@@ -21,13 +23,16 @@ CLIP_DURATION = 28  # detik
 def get_wib_time():
     return datetime.datetime.now(datetime.timezone.utc).astimezone(pytz.timezone("Asia/Jakarta"))
 
-# === CLIP OFFSET ===
-def get_offset():
+# === CEK SUDAH UPLOAD ATAU BELUM DI JAM INI ===
+def current_log_key():
+    return get_wib_time().strftime("%Y-%m-%d-%H")
+
+def already_uploaded():
     if not os.path.exists(LOG_PATH):
-        return 0
+        return False
     with open(LOG_PATH, "r") as f:
         data = json.load(f)
-    return len(data)
+    return current_log_key() in data
 
 def mark_uploaded():
     os.makedirs("logs", exist_ok=True)
@@ -36,14 +41,22 @@ def mark_uploaded():
             json.dump([], f)
     with open(LOG_PATH, "r+") as f:
         data = json.load(f)
-        key = get_wib_time().strftime("%Y-%m-%d-%H")
+        key = current_log_key()
         if key not in data:
             data.append(key)
         f.seek(0)
         json.dump(data, f, indent=2)
         f.truncate()
 
-# === PROSES UTAMA ===
+# === OFFSET CLIP ===
+def get_offset():
+    if not os.path.exists(LOG_PATH):
+        return 0
+    with open(LOG_PATH, "r") as f:
+        data = json.load(f)
+    return len(data)
+
+# === PROSES UPLOAD ===
 def upload_task():
     now = get_wib_time().strftime("%Y-%m-%d %H:%M:%S")
     print(f"🚀 [{now} WIB] PAKSA upload Shorts...")
@@ -72,16 +85,26 @@ def upload_task():
     except Exception as e:
         print(f"❌ Gagal upload: {e}")
 
-# === FLASK APP (agar Render tetap ON) ===
+# === FLASK WEB SERVER (untuk Render) ===
 app = Flask(__name__)
+
 @app.route("/")
 def index():
-    return "🟢 Bot aktif — mode paksa upload"
+    return "🟢 Bot aktif (Render.com) - Upload Shorts otomatis"
 
 # === MAIN ===
 if __name__ == "__main__":
-    upload_task()  # PAKSA UPLOAD LANGSUNG
+    # Jalankan Flask agar Render deteksi port 3000
+    Thread(target=lambda: serve(app, host="0.0.0.0", port=3000)).start()
 
-    # Jalankan web service biar Render deteksi port 3000
-    from waitress import serve
-    serve(app, host="0.0.0.0", port=3000)
+    time.sleep(3)  # biar Flask siap
+
+    # Langsung coba upload jika belum
+    if not already_uploaded():
+        upload_task()
+    else:
+        print("⏳ Sudah upload di jam ini. Tidak upload ulang.")
+
+    # Keep-alive loop
+    while True:
+        time.sleep(60)
